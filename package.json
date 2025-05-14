@@ -1,0 +1,25 @@
+{
+  "name": "takimbox",
+  "version": "1.0.0",
+  "description": "A webpage to leave messages for GalaYaki, to be used in it's anniversary",
+  "main": "main.js",
+  "type": "module",
+  "scripts": {
+    "start": "nodemon server.js",
+    "dev": "concurrently \"npm run dev --prefix client\" \"npm start\""
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/takitoscorp/takimbox.git"
+  },
+  "author": "",
+  "license": "AGPL-3.0",
+  "bugs": {
+    "url": "https://github.com/takitoscorp/takimbox/issues"
+  },
+  "homepage": "https://github.com/takitoscorp/takimbox#readme",
+  "dependencies": {
+    "dotenv": "^16.5.0",
+    "express": "^5.1.0"
+  }
+}
