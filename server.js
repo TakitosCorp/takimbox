@@ -1,20 +1,122 @@
-import e from "express";
+import express from "express";
 import path from "path";
 import { fileURLToPath } from "url";
 import { config } from "dotenv";
+import { Kysely, SqliteDialect } from "kysely";
+import Database from "better-sqlite3";
+import bodyParser from "body-parser";
+
+const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
 config({ path: path.resolve(__dirname, ".env") });
 
 async function main() {
-  const __dirname = path.dirname(fileURLToPath(import.meta.url));
-  const __filename = path.basename(fileURLToPath(import.meta.url));
+  const app = express();
+  const port = process.env.PORT || 3000;
 
-  const app = e();
-  const port = 3000;
+  app.use(bodyParser.json());
+  app.use(bodyParser.urlencoded({ extended: true }));
 
-  app.get("/", (req, res) => {
-    res.send("Hello World!");
+  const rootDir = path.resolve(__dirname);
+  const dbFile = path.join(rootDir, "takimbox.db");
+  const db = new Kysely({
+    dialect: new SqliteDialect({
+      database: new Database(dbFile),
+    }),
   });
+
+  async function initDb() {
+    await db.transaction().execute(async (trx) => {
+      await trx.schema
+        .createTable("config")
+        .ifNotExists()
+        .addColumn("id", "varchar(50)", (col) => col.notNull().primaryKey())
+        .addColumn("value", "varchar(255)", (col) => col.notNull())
+        .execute();
+
+      await trx.schema
+        .createTable("messages")
+        .ifNotExists()
+        .addColumn("id", "integer", (col) => col.primaryKey().autoIncrement())
+        .addColumn("name", "varchar(100)", (col) => col.notNull())
+        .addColumn("content", "varchar(255)", (col) => col.notNull())
+        .addColumn("color", "varchar(20)", (col) => col.notNull())
+        .addColumn("author", "varchar(100)", (col) => col.notNull())
+        .addColumn("timestamp", "integer", (col) => col.notNull())
+        .addColumn("deleted", "boolean", (col) => col.defaultTo(false).notNull())
+        .execute();
+    });
+  }
+
+  await initDb();
+
+  app.post("/api/messages", async (req, res) => {
+    let { name, content, color, author, timestamp } = req.body;
+    if (!name || !content || !color || !author) {
+      return res.status(400).json({ error: "Faltan campos requeridos" });
+    }
+    if (!timestamp) {
+      timestamp = Date.now();
+    }
+    try {
+      const result = await db
+        .insertInto("messages")
+        .values({
+          name,
+          content,
+          color,
+          author,
+          timestamp,
+        })
+        .returning("id")
+        .executeTakeFirst();
+      res.status(201).json({ success: true, id: result.id });
+    } catch (err) {
+      res.status(500).json({ error: "Error al insertar el mensaje" });
+    }
+  });
+
+  app.get("/api/messages", async (req, res) => {
+    try {
+      const messages = await db.selectFrom("messages").selectAll().execute();
+      res.json(messages);
+    } catch (err) {
+      console.error("Error al obtener los mensajes:", err);
+      res.status(500).json({ error: "Error al obtener los mensajes" });
+    }
+  });
+
+  app.get("/api/messages/:id", async (req, res) => {
+    const { id } = req.params;
+    try {
+      const message = await db
+        .selectFrom("messages")
+        .selectAll()
+        .where("id", "=", id)
+        .executeTakeFirst();
+      if (!message) {
+        return res.status(404).json({ error: "Mensaje no encontrado" });
+      }
+      res.json(message);
+    } catch (err) {
+      res.status(500).json({ error: "Error al obtener el mensaje" });
+    }
+  });
+
+  app.get("/api/config/:key", async (req, res) => {
+    const { key } = req.params;
+    try {
+      const configItem = await db.selectFrom("config").selectAll().where("id", "=", key).executeTakeFirst();
+      if (!configItem) {
+        return res.status(404).json({ error: "Config no encontrada" });
+      }
+      res.json(configItem);
+    } catch (err) {
+      res.status(500).json({ error: "Error al obtener la config" });
+    }
+  });
+
+  app.use("/", express.static(path.join(__dirname, "views")));
 
   app.listen(port, () => {
     console.log(`Server is running at http://localhost:${port}`);

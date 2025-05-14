@@ -5,7 +5,7 @@
   "main": "main.js",
   "type": "module",
   "scripts": {
-    "start": "nodemon server.js",
+    "start": "npx nodemon server.js",
     "dev": "concurrently \"npm run dev --prefix client\" \"npm start\""
   },
   "repository": {
@@ -19,7 +19,9 @@
   },
   "homepage": "https://github.com/takitoscorp/takimbox#readme",
   "dependencies": {
+    "better-sqlite3": "^11.10.0",
     "dotenv": "^16.5.0",
-    "express": "^5.1.0"
+    "express": "^5.1.0",
+    "kysely": "^0.28.2"
   }
 }
