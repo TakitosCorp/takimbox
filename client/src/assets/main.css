@@ -1,1 +1,237 @@
-@import "tailwindcss";
+@import 'tailwindcss';
+
+html {
+  cursor: url('/wii-open-ccw.cur'), auto;
+}
+
+button,
+a,
+input[type='button'],
+input[type='submit'],
+input[type='reset'],
+[role='button'],
+[tabindex]:not([tabindex='-1']),
+.cursor-pointer,
+.cursor-pointer * {
+  cursor: url('/wii-pointer-ccw.cur'), pointer !important;
+}
+
+body::-webkit-scrollbar {
+  width: 0px;
+}
+
+.hide-scrollbar {
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+
+.hide-scrollbar::-webkit-scrollbar {
+  display: none;
+  width: 0;
+  height: 0;
+}
+
+.wii-paper {
+  position: relative;
+  width: 100%;
+  padding: 10px 0;
+  line-height: 2.5em;
+  background-image: linear-gradient(#c8d0d8 1px, transparent 1px);
+  background-size: 100% 2.5em;
+  background-position: 0 2.35em;
+  white-space: pre-wrap;
+  word-break: break-word;
+  color: #333;
+}
+
+.envelope {
+  position: relative;
+  overflow: visible;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
+  transition: all 0.3s ease;
+  border: 1px solid rgba(0, 0, 0, 0.05);
+}
+
+.envelope-inner {
+  border-radius: inherit;
+  overflow: visible;
+}
+
+@keyframes pulse {
+  0% {
+    transform: scale(1);
+    opacity: 1;
+  }
+
+  50% {
+    transform: scale(1.1);
+    opacity: 0.8;
+  }
+
+  100% {
+    transform: scale(1);
+    opacity: 1;
+  }
+}
+
+.animate-pulse {
+  animation: pulse 1.5s infinite;
+}
+
+.slide-left-enter-active,
+.slide-left-leave-active,
+.slide-right-enter-active,
+.slide-right-leave-active {
+  transition: all 0.3s ease-out;
+}
+
+.slide-left-enter-from {
+  opacity: 0;
+  transform: translateX(30px);
+}
+
+.slide-left-leave-to {
+  opacity: 0;
+  transform: translateX(-30px);
+}
+
+.slide-right-enter-from {
+  opacity: 0;
+  transform: translateX(-30px);
+}
+
+.slide-right-leave-to {
+  opacity: 0;
+  transform: translateX(30px);
+}
+
+.fade-enter-active,
+.fade-leave-active {
+  transition:
+    opacity 0.35s ease,
+    transform 0.35s ease;
+  position: absolute;
+  width: 100%;
+  height: 100%;
+}
+
+.fade-enter-from,
+.fade-leave-to {
+  opacity: 0;
+  transform: scale(0.98);
+}
+
+.fade-new-enter-active {
+  transition: opacity 0.8s;
+}
+
+.fade-new-leave-active {
+  transition: opacity 0.3s;
+}
+
+.fade-new-enter-from {
+  opacity: 0;
+}
+
+.fade-new-enter-to {
+  opacity: 1;
+}
+
+.fade-new-leave-from {
+  opacity: 1;
+}
+
+.fade-new-leave-to {
+  opacity: 0;
+}
+
+.just-added {
+  box-shadow: 0 0 0 3px #60a5fa55;
+  z-index: 1;
+}
+
+@media (max-width: 1200px) {
+  .wii-paper {
+    line-height: 2.4em;
+    background-size: 100% 2.4em;
+    background-position: 0 2.25em;
+  }
+}
+
+@media (max-width: 992px) {
+  .wii-paper {
+    line-height: 2.3em;
+    background-size: 100% 2.3em;
+    background-position: 0 2.15em;
+  }
+}
+
+@media (max-width: 768px) {
+  .wii-paper {
+    line-height: 1.8em;
+    background-image: none;
+    font-size: 1.1rem;
+    padding: 5px 0;
+  }
+}
+
+@media (max-width: 640px) {
+  .wii-paper {
+    line-height: 1.6em;
+    font-size: 1rem;
+    color: #333 !important;
+    -webkit-text-fill-color: #333;
+    background-clip: initial !important;
+    -webkit-background-clip: initial !important;
+  }
+
+  .envelope {
+    border-radius: 12px;
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.08);
+  }
+
+  .mobile-button {
+    border-width: 3px;
+  }
+}
+
+@media (max-width: 480px) {
+  .wii-paper {
+    line-height: 1.5em;
+    font-size: 0.95rem;
+  }
+
+  .envelope {
+    height: 70px;
+  }
+}
+
+@media (max-width: 380px) {
+  .wii-paper {
+    line-height: 1.4em;
+    font-size: 0.9rem;
+  }
+
+  .envelope {
+    height: 68px;
+  }
+}
+
+@media (orientation: landscape) and (max-height: 600px) {
+  .wii-paper {
+    line-height: 1.5em;
+    font-size: 0.95rem;
+  }
+}
+
+@media (orientation: landscape) and (max-width: 900px) {
+  .envelope {
+    height: 60px;
+  }
+
+  .grid {
+    grid-template-columns: repeat(3, 1fr);
+    gap: 12px;
+    padding: 12px;
+  }
+}

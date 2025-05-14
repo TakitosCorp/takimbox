@@ -45,10 +45,30 @@ async function main() {
         .addColumn("timestamp", "integer", (col) => col.notNull())
         .addColumn("deleted", "boolean", (col) => col.defaultTo(false).notNull())
         .execute();
+
+      const reveal = await trx.selectFrom("config").select("id").where("id", "=", "revealTimestamp").executeTakeFirst();
+      if (!reveal) {
+        await trx
+          .insertInto("config")
+          .values({
+            id: "revealTimestamp",
+            value: String(1749924000 * 1000),
+          })
+          .execute();
+      }
     });
   }
 
   await initDb();
+
+  async function getRevealTimestamp() {
+    const configItem = await db
+      .selectFrom("config")
+      .select("value")
+      .where("id", "=", "revealTimestamp")
+      .executeTakeFirst();
+    return configItem ? Number(configItem.value) : null;
+  }
 
   app.post("/api/messages", async (req, res) => {
     let { name, content, color, author, timestamp } = req.body;
@@ -78,7 +98,15 @@ async function main() {
 
   app.get("/api/messages", async (req, res) => {
     try {
+      const revealTimestamp = await getRevealTimestamp();
       const messages = await db.selectFrom("messages").selectAll().execute();
+      if (revealTimestamp && Date.now() < revealTimestamp) {
+        const safeMessages = messages.map((msg) => ({
+          ...msg,
+          content: "",
+        }));
+        return res.json(safeMessages);
+      }
       res.json(messages);
     } catch (err) {
       console.error("Error al obtener los mensajes:", err);
@@ -89,11 +117,14 @@ async function main() {
   app.get("/api/messages/:id", async (req, res) => {
     const { id } = req.params;
     try {
-      const message = await db
-        .selectFrom("messages")
-        .selectAll()
-        .where("id", "=", id)
-        .executeTakeFirst();
+      const revealTimestamp = await getRevealTimestamp();
+      if (revealTimestamp && Date.now() < revealTimestamp) {
+        return res.status(403).json({
+          error: "Aún no puedes ver los mensajes",
+          revealTimestamp,
+        });
+      }
+      const message = await db.selectFrom("messages").selectAll().where("id", "=", id).executeTakeFirst();
       if (!message) {
         return res.status(404).json({ error: "Mensaje no encontrado" });
       }

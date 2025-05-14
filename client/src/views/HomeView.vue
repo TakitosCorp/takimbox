@@ -47,7 +47,7 @@
         <div v-else-if="!selectedMessage" key="grid" class="absolute inset-0 flex flex-col items-center justify-center">
           <transition :name="transitionName" mode="out-in">
             <transition-group name="fade-new" tag="div" :key="currentPage" class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4 sm:gap-7 px-4 py-6 sm:p-10 w-full max-w-7xl mx-auto sm:px-24">
-              <div v-for="message in currentPageMessages" :key="message.id" class="relative cursor-pointer transform hover:scale-105 transition-transform shadow-xl hover:shadow-2xl" @click="openMessage(message)" :class="{ 'just-added': message.justAdded }">
+              <div v-for="message in currentPageMessages" :key="message.id" class="relative cursor-pointer transform hover:scale-105 transition-transform shadow-xl hover:shadow-2xl" @click="openMessage(message)">
                 <div class="envelope w-full h-[72px] sm:h-36 rounded-xl flex items-center justify-center" :style="{ backgroundColor: message.color || '#FFFFC9' }">
                   <div class="envelope-inner w-full h-full relative">
                     <div class="absolute w-full h-full flex items-center justify-center opacity-20">
@@ -136,7 +136,7 @@
       <div class="flex items-center">
         <button @click="goHome" class="mobile-button w-8 h-8 sm:w-11 sm:h-11 bg-blue-100 rounded-full border-4 border-blue-300 flex items-center justify-center cursor-pointer hover:scale-105 transition-transform">
           <div class="w-4 h-4 sm:w-6 sm:h-6 bg-transparent flex items-center justify-center">
-            <svg xmlns="http://www.w3.org/2000/svg" class="h-3.5 w-3.5 sm:h-5 sm:w-5 text-gray-600" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-3.5 w-3.5 sm:h-5 text-gray-600" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
               <path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2V9z"></path>
               <polyline points="9 22 9 12 15 12 15 22"></polyline>
             </svg>
@@ -148,7 +148,7 @@
 </template>
 
 <script setup>
-import { ref, computed, onMounted, onUnmounted } from 'vue';
+import { ref, computed, onMounted, onUnmounted, watch } from 'vue';
 
 const READ_KEY = 'takimbox_read_messages';
 
@@ -177,6 +177,10 @@ const messages = ref([]);
 const fetchMessages = async () => {
   try {
     const res = await fetch('/api/messages');
+    if (res.status === 403) {
+      messages.value = [];
+      return;
+    }
     if (!res.ok) throw new Error('Error al obtener mensajes');
     const data = await res.json();
     const readIds = getReadIds();
@@ -192,6 +196,7 @@ const fetchMessages = async () => {
 const fetchNewMessages = async () => {
   try {
     const res = await fetch('/api/messages');
+    if (res.status === 403) return;
     if (!res.ok) return;
     const data = await res.json();
     const readIds = getReadIds();
@@ -200,12 +205,8 @@ const fetchNewMessages = async () => {
     if (nuevos.length > 0) {
       nuevos.forEach(msg => {
         msg.read = readIds.includes(msg.id);
-        msg.justAdded = true;
       });
       messages.value = [...nuevos, ...messages.value];
-      setTimeout(() => {
-        messages.value.forEach(m => { m.justAdded = false; });
-      }, 800);
     }
   } catch (e) {
     console.error('Error al obtener nuevos mensajes', e);
@@ -294,19 +295,92 @@ const updateMessagesPerPage = () => {
   messagesPerPage.value = window.innerWidth < 640 ? 6 : 9;
 };
 
-onMounted(() => {
-  updateMessagesPerPage();
-  window.addEventListener('resize', updateMessagesPerPage);
-  fetchMessages();
+const revealTimestamp = ref(null);
+const revealLoaded = ref(false);
 
+const fetchRevealTimestamp = async () => {
+  try {
+    const res = await fetch('/api/config/revealTimestamp');
+    if (!res.ok) throw new Error();
+    const data = await res.json();
+    revealTimestamp.value = Number(data.value);
+  } catch {
+    revealTimestamp.value = null;
+  } finally {
+    revealLoaded.value = true;
+  }
+};
+
+const canReveal = computed(() => {
+  if (!revealLoaded.value) return false;
+  if (!revealTimestamp.value) return true;
+  return Date.now() >= revealTimestamp.value;
+});
+
+function generateMatrixContent() {
+  return "Seguro que el contenido de este mensaje merece la pena :D";
+}
+
+const genericMessage = computed(() => ({
+  name: "¡Vuelve más tarde!",
+  author: "TakitosCorp",
+  content: generateMatrixContent(),
+  timestamp: Date.now(),
+  color: "#E1D7F6"
+}));
+
+const openMessage = (message) => {
+  lastPage.value = currentPage.value;
+  if (!canReveal.value) {
+    selectedMessage.value = genericMessage.value;
+  } else {
+    selectedMessage.value = message;
+    markRead(message.id);
+    message.read = true;
+    if (matrixInterval) {
+      clearInterval(matrixInterval);
+      matrixInterval = null;
+    }
+  }
+  showComposeForm.value = false;
+};
+
+const closeDetailOnOutsideClick = () => {
+  selectedMessage.value = null;
+};
+
+onMounted(() => {
+  fetchRevealTimestamp().then(() => {
+    updateMessagesPerPage();
+    window.addEventListener('resize', updateMessagesPerPage);
+    fetchMessages();
+
+    intervalId = setInterval(() => {
+      now.value = Date.now();
+      fetchNewMessages();
+    }, 10000);
+  });
+  updateContainerWidth();
+  window.addEventListener('resize', updateContainerWidth);
   intervalId = setInterval(() => {
     now.value = Date.now();
-    fetchNewMessages();
-  }, 5000);
+  }, 1000);
+
+  const syncRead = () => {
+    const readIds = getReadIds();
+    messages.value.forEach(msg => {
+      msg.read = readIds.includes(msg.id);
+    });
+  };
+  window.addEventListener('storage', syncRead);
 });
 
 onUnmounted(() => {
   window.removeEventListener('resize', updateMessagesPerPage);
+  window.removeEventListener('resize', updateContainerWidth);
+  if (intervalId) clearInterval(intervalId);
+  window.removeEventListener('storage', syncRead);
+  if (matrixInterval) clearInterval(matrixInterval);
 });
 
 const transitionName = ref('slide-left');
@@ -327,24 +401,6 @@ const fechaEspanol = computed(() => {
   const minutos = date.getMinutes().toString().padStart(2, '0');
   return `${diaSemana} ${dia}/${mes} - ${horas}:${minutos}`;
 });
-
-const openMessage = (message) => {
-  lastPage.value = currentPage.value;
-  selectedMessage.value = message;
-  markRead(message.id);
-  message.read = true;
-  showComposeForm.value = false;
-};
-
-const goHome = () => {
-  if (selectedMessage.value || showComposeForm.value) {
-    selectedMessage.value = null;
-    showComposeForm.value = false;
-    currentPage.value = lastPage.value;
-  } else {
-    currentPage.value = 0;
-  }
-};
 
 const updateContainerWidth = () => {
   if (contentContainer.value) {
@@ -384,266 +440,4 @@ const nextPage = () => {
     currentPage.value++;
   }
 };
-
-const closeDetailOnOutsideClick = () => {
-  selectedMessage.value = null;
-};
-
-onMounted(() => {
-  updateContainerWidth();
-  window.addEventListener('resize', updateContainerWidth);
-  intervalId = setInterval(() => {
-    now.value = Date.now();
-  }, 1000);
-
-  const syncRead = () => {
-    const readIds = getReadIds();
-    messages.value.forEach(msg => {
-      msg.read = readIds.includes(msg.id);
-    });
-  };
-  window.addEventListener('storage', syncRead);
-});
-
-onUnmounted(() => {
-  window.removeEventListener('resize', updateContainerWidth);
-  if (intervalId) clearInterval(intervalId);
-  window.removeEventListener('storage', syncRead);
-});
 </script>
-
-<style>
-html {
-  cursor: url('/wii-open-ccw.cur'), auto;
-}
-
-button,
-a,
-input[type="button"],
-input[type="submit"],
-input[type="reset"],
-[role="button"],
-[tabindex]:not([tabindex="-1"]),
-.cursor-pointer,
-.cursor-pointer * {
-  cursor: url('/wii-pointer-ccw.cur'), pointer !important;
-}
-
-body::-webkit-scrollbar {
-  width: 0px;
-}
-
-.hide-scrollbar {
-  scrollbar-width: none;
-  -ms-overflow-style: none;
-}
-
-.hide-scrollbar::-webkit-scrollbar {
-  display: none;
-  width: 0;
-  height: 0;
-}
-
-.wii-paper {
-  position: relative;
-  width: 100%;
-  padding: 10px 0;
-  line-height: 2.5em;
-  background-image: linear-gradient(#C8D0D8 1px, transparent 1px);
-  background-size: 100% 2.5em;
-  background-position: 0 2.35em;
-  white-space: pre-wrap;
-  word-break: break-word;
-  color: #333;
-}
-
-.envelope {
-  position: relative;
-  overflow: visible;
-  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
-  transition: all 0.3s ease;
-  border: 1px solid rgba(0, 0, 0, 0.05);
-}
-
-.envelope-inner {
-  border-radius: inherit;
-  overflow: visible;
-}
-
-@keyframes pulse {
-  0% {
-    transform: scale(1);
-    opacity: 1;
-  }
-
-  50% {
-    transform: scale(1.1);
-    opacity: 0.8;
-  }
-
-  100% {
-    transform: scale(1);
-    opacity: 1;
-  }
-}
-
-.animate-pulse {
-  animation: pulse 1.5s infinite;
-}
-
-.slide-left-enter-active,
-.slide-left-leave-active,
-.slide-right-enter-active,
-.slide-right-leave-active {
-  transition: all 0.3s ease-out;
-}
-
-.slide-left-enter-from {
-  opacity: 0;
-  transform: translateX(30px);
-}
-
-.slide-left-leave-to {
-  opacity: 0;
-  transform: translateX(-30px);
-}
-
-.slide-right-enter-from {
-  opacity: 0;
-  transform: translateX(-30px);
-}
-
-.slide-right-leave-to {
-  opacity: 0;
-  transform: translateX(30px);
-}
-
-.fade-enter-active,
-.fade-leave-active {
-  transition: opacity 0.35s ease, transform 0.35s ease;
-  position: absolute;
-  width: 100%;
-  height: 100%;
-}
-
-.fade-enter-from,
-.fade-leave-to {
-  opacity: 0;
-  transform: scale(0.98);
-}
-
-.fade-new-enter-active {
-  transition: opacity 0.8s;
-}
-
-.fade-new-leave-active {
-  transition: opacity 0.3s;
-}
-
-.fade-new-enter-from {
-  opacity: 0;
-}
-
-.fade-new-enter-to {
-  opacity: 1;
-}
-
-.fade-new-leave-from {
-  opacity: 1;
-}
-
-.fade-new-leave-to {
-  opacity: 0;
-}
-
-.just-added {
-  box-shadow: 0 0 0 3px #60a5fa55;
-  z-index: 1;
-}
-
-@media (max-width: 1200px) {
-  .wii-paper {
-    line-height: 2.4em;
-    background-size: 100% 2.4em;
-    background-position: 0 2.25em;
-  }
-}
-
-@media (max-width: 992px) {
-  .wii-paper {
-    line-height: 2.3em;
-    background-size: 100% 2.3em;
-    background-position: 0 2.15em;
-  }
-}
-
-@media (max-width: 768px) {
-  .wii-paper {
-    line-height: 1.8em;
-    background-image: none;
-    font-size: 1.1rem;
-    padding: 5px 0;
-  }
-}
-
-@media (max-width: 640px) {
-  .wii-paper {
-    line-height: 1.6em;
-    font-size: 1rem;
-    color: #333 !important;
-    -webkit-text-fill-color: #333;
-    background-clip: initial !important;
-    -webkit-background-clip: initial !important;
-  }
-
-  .envelope {
-    border-radius: 12px;
-    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.08);
-  }
-
-  .mobile-button {
-    border-width: 3px;
-  }
-}
-
-@media (max-width: 480px) {
-  .wii-paper {
-    line-height: 1.5em;
-    font-size: 0.95rem;
-  }
-
-  .envelope {
-    height: 70px;
-  }
-}
-
-@media (max-width: 380px) {
-  .wii-paper {
-    line-height: 1.4em;
-    font-size: 0.9rem;
-  }
-
-  .envelope {
-    height: 68px;
-  }
-}
-
-@media (orientation: landscape) and (max-height: 600px) {
-  .wii-paper {
-    line-height: 1.5em;
-    font-size: 0.95rem;
-  }
-}
-
-@media (orientation: landscape) and (max-width: 900px) {
-  .envelope {
-    height: 60px;
-  }
-
-  .grid {
-    grid-template-columns: repeat(3, 1fr);
-    gap: 12px;
-    padding: 12px;
-  }
-}
-</style>
