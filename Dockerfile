@@ -4,7 +4,7 @@ FROM node:23-alpine AS build-client
 WORKDIR /app/client
 
 # Copia toda la carpeta client
-COPY client ./
+COPY client ./ 
 
 # Instala dependencias y construye el proyecto
 RUN npm install && npm run build
@@ -15,19 +15,20 @@ FROM node:23-alpine
 # Establece el directorio de trabajo
 WORKDIR /app
 
-# Instala herramientas necesarias y configura la zona horaria
-RUN apk add --no-cache tzdata && \
-  cp /usr/share/zoneinfo/Europe/Madrid /etc/localtime && \
-  echo "Europe/Madrid" > /etc/timezone
-
 # Copia los archivos necesarios para instalar dependencias
 COPY package*.json ./
 
-# Instala dependencias, considerando entorno de producción
-RUN npm install --production && \
-  npm cache clean --force
+# Instala herramientas necesarias, dependencias, compila nativos y desinstala build tools en un solo layer
+RUN apk add --no-cache tzdata python3 make g++ && \
+  cp /usr/share/zoneinfo/Europe/Madrid /etc/localtime && \
+  echo "Europe/Madrid" > /etc/timezone && \
+  npm install --omit=dev && \
+  npm cache clean --force && \
+  npm rebuild --force && \
+  npm rebuild better-sqlite3 --build-from-source && \
+  apk del python3 make g++
 
-# Copia el resto del código de la aplicación
+# Copia solo el código fuente y no node_modules
 COPY . .
 
 # Copia los contenidos de dist a views desde la etapa de construcción
