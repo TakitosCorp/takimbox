@@ -121,7 +121,7 @@
     <!-- Footer -->
     <div class="h-12 sm:h-14 bg-gray-200 border-t border-gray-300 flex items-center justify-between px-4 sm:px-5 sticky bottom-0 z-20">
       <div class="flex items-center">
-        <button @click="composeMessage" class="mobile-button w-8 h-8 sm:w-11 sm:h-11 bg-blue-100 rounded-full border-4 border-blue-300 flex items-center justify-center cursor-pointer hover:scale-105 transition-transform">
+        <button @click="composeMessage" class="mobile-button w-8 h-8 sm:w-11 sm:h-11 bg-blue-100 rounded-full border-4 border-blue-300 flex items-center justify-center cursor-pointer hover:scale-105 transition-transform" :class="{ 'compose-highlight': highlightCompose }">
           <div class="w-4 h-4 sm:w-6 sm:h-6 bg-transparent flex items-center justify-center">
             <svg xmlns="http://www.w3.org/2000/svg" class="h-3.5 w-3.5 sm:h-5 sm:w-5 text-gray-600" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
               <rect x="2" y="4" width="20" height="16" rx="2"></rect>
@@ -403,12 +403,6 @@ const openMessage = (message) => {
   if (message.id === tutorialMessageId) {
     setTutorialSeen();
     selectedMessage.value = message;
-    const removeTutorial = () => {
-      selectedMessage.value = null;
-      fetchMessages();
-      window.removeEventListener('mousedown', removeTutorial);
-    };
-    window.addEventListener('mousedown', removeTutorial);
     showComposeForm.value = false;
     return;
   }
@@ -426,7 +420,19 @@ const openMessage = (message) => {
   showComposeForm.value = false;
 };
 
+const highlightCompose = ref(false);
+let highlightTimeout = null;
+
 const closeDetailOnOutsideClick = () => {
+  if (selectedMessage.value && selectedMessage.value.id === tutorialMessageId) {
+    messages.value = messages.value.filter(msg => msg.id !== tutorialMessageId);
+    // Destaca el botón de redactar durante 3 segundos
+    highlightCompose.value = true;
+    if (highlightTimeout) clearTimeout(highlightTimeout);
+    highlightTimeout = setTimeout(() => {
+      highlightCompose.value = false;
+    }, 3000);
+  }
   selectedMessage.value = null;
 };
 
@@ -463,6 +469,7 @@ onUnmounted(() => {
   if (intervalId) clearInterval(intervalId);
   window.removeEventListener('storage', syncRead);
   if (matrixInterval) clearInterval(matrixInterval);
+  if (highlightTimeout) clearTimeout(highlightTimeout);
 });
 
 const transitionName = ref('slide-left');

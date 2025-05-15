@@ -9,7 +9,7 @@ import { RouterView } from 'vue-router'
 <style scoped>
 @font-face {
   font-family: 'Comfortaa';
-  src: url('https://fonts.googleapis.com/css2?family=Comfortaa:wght@100&display=swap') format('truetype');
+  src: url('https://fonts.googleapis.com/css2?family=Comfortaa:wght@400&display=swap') format('truetype');
 }
 
 html,

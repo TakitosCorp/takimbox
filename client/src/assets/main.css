@@ -235,3 +235,37 @@ body::-webkit-scrollbar {
     padding: 12px;
   }
 }
+
+.compose-highlight {
+  animation: highlight-compose 0.7s cubic-bezier(0.4, 0, 0.2, 1) 0s 3 alternate;
+  box-shadow:
+    0 0 0 6px #60a5fa,
+    0 0 16px 8px #3b82f6;
+  border-color: #2563eb !important;
+  background: linear-gradient(90deg, #fff 60%, #60a5fa 100%);
+  position: relative;
+  z-index: 50;
+}
+
+@keyframes highlight-compose {
+  0% {
+    transform: scale(1);
+    box-shadow:
+      0 0 0 6px #60a5fa,
+      0 0 16px 8px #3b82f6;
+  }
+
+  50% {
+    transform: scale(1.15);
+    box-shadow:
+      0 0 0 12px #2563eb,
+      0 0 32px 16px #3b82f6;
+  }
+
+  100% {
+    transform: scale(1);
+    box-shadow:
+      0 0 0 6px #60a5fa,
+      0 0 16px 8px #3b82f6;
+  }
+}
