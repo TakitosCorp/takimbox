@@ -148,9 +148,70 @@
 </template>
 
 <script setup>
-import { ref, computed, onMounted, onUnmounted, watch } from 'vue';
+import { ref, computed, onMounted, onUnmounted } from 'vue';
 
 const READ_KEY = 'takimbox_read_messages';
+const TUTORIAL_KEY = 'takimbox_tutorial_seen';
+
+const tutorialMessageId = '__tutorial__';
+const tutorialAuthor = 'AlexDevUwU';
+
+const tutorialMessage = computed(() => {
+  let revealDate = '';
+  if (revealTimestamp.value) {
+    const date = new Date(revealTimestamp.value);
+    const dia = date.getDate().toString().padStart(2, '0');
+    const mes = (date.getMonth() + 1).toString().padStart(2, '0');
+    const año = date.getFullYear();
+    const horas = date.getHours().toString().padStart(2, '0');
+    const minutos = date.getMinutes().toString().padStart(2, '0');
+    revealDate = `${dia}/${mes}/${año} ${horas}:${minutos}`;
+  } else {
+    revealDate = '[pronto]';
+  }
+  return {
+    id: tutorialMessageId,
+    name: 'Introducción :D',
+    author: tutorialAuthor,
+    color: '#E1D7F6',
+    read: false,
+    timestamp: Date.now(),
+    content: `¡Hola y bienvenido a Takimbox! 🐙
+Este es un espacio muy especial, diseñado con cariño para que te sientas como en la mensajería de la Wii (¡seguro que ya lo notaste por el cursor retro si estás en tu PC!).
+
+Aquí puedes escribir todos los mensajes que quieras para Gala, que serán revelados en su aniversario, a partir del día ${revealDate}.
+
+🔏 Hasta entonces, todos los mensajes permanecerán en secreto, así que no podrás leer ninguno, ni siquiera los que tú mismo envíes.
+⚠️ Además, ten en cuenta que los mensajes no se pueden editar ni eliminar una vez enviados, ¡así que asegúrate de revisarlos bien antes de dar clic en enviar!
+
+Normas de sentido común:
+✅ Sé respetuoso: Recuerda que este es un espacio para enviar mensajes para celebrar el aniversario de Gala. Evita cualquier comentario ofensivo o inapropiado.
+✅ Sé original: Intenta que tus mensajes sean únicos y personales, así será más especial!
+✅ Nada de spoilers: Si estás planeando algo especial para Gala, ¡mejor no lo menciones aquí para no arruinar la sorpresa!
+✅ Mantén un tono positivo: Este es un espacio de celebración, así que trata de transmitir alegría, cariño y buenos deseos.
+
+⚠️ Si no sigues estas normas, tu mensaje será eliminado y no se mostrará en la página, además de que se podrán tomar acciones para moderar este comportamiento.
+
+¡Gracias por ser parte de esta sorpresa tan especial para Gala! ❤️`
+  };
+});
+
+const tutorialSeen = ref(false);
+
+function checkTutorialSeen() {
+  try {
+    tutorialSeen.value = !!localStorage.getItem(TUTORIAL_KEY);
+  } catch {
+    tutorialSeen.value = false;
+  }
+}
+
+function setTutorialSeen() {
+  try {
+    localStorage.setItem(TUTORIAL_KEY, '1');
+    tutorialSeen.value = true;
+  } catch { }
+}
 
 function getReadIds() {
   try {
@@ -184,10 +245,14 @@ const fetchMessages = async () => {
     if (!res.ok) throw new Error('Error al obtener mensajes');
     const data = await res.json();
     const readIds = getReadIds();
-    messages.value = data.map(msg => ({
+    let msgs = data.map(msg => ({
       ...msg,
       read: readIds.includes(msg.id)
     }));
+    if (!tutorialSeen.value) {
+      msgs = [tutorialMessage.value, ...msgs];
+    }
+    messages.value = msgs;
   } catch (e) {
     messages.value = [];
   }
@@ -206,7 +271,11 @@ const fetchNewMessages = async () => {
       nuevos.forEach(msg => {
         msg.read = readIds.includes(msg.id);
       });
-      messages.value = [...nuevos, ...messages.value];
+      if (!tutorialSeen.value && messages.value.length && messages.value[0].id === tutorialMessageId) {
+        messages.value = [tutorialMessage.value, ...nuevos, ...messages.value.slice(1)];
+      } else {
+        messages.value = [...nuevos, ...messages.value];
+      }
     }
   } catch (e) {
     console.error('Error al obtener nuevos mensajes', e);
@@ -331,6 +400,18 @@ const genericMessage = computed(() => ({
 
 const openMessage = (message) => {
   lastPage.value = currentPage.value;
+  if (message.id === tutorialMessageId) {
+    setTutorialSeen();
+    selectedMessage.value = message;
+    const removeTutorial = () => {
+      selectedMessage.value = null;
+      fetchMessages();
+      window.removeEventListener('mousedown', removeTutorial);
+    };
+    window.addEventListener('mousedown', removeTutorial);
+    showComposeForm.value = false;
+    return;
+  }
   if (!canReveal.value) {
     selectedMessage.value = genericMessage.value;
   } else {
@@ -350,6 +431,7 @@ const closeDetailOnOutsideClick = () => {
 };
 
 onMounted(() => {
+  checkTutorialSeen();
   fetchRevealTimestamp().then(() => {
     updateMessagesPerPage();
     window.addEventListener('resize', updateMessagesPerPage);
