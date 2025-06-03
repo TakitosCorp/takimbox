@@ -8,7 +8,8 @@ services:
     ports:
       - "3006:3000"
     volumes:
-      - type: bind
-        source: ./takimbox.db
-        target: /app/takimbox.db
+      - sqlite_data:/app
       - ./.env:/app/.env
+
+volumes:
+  sqlite_data:
