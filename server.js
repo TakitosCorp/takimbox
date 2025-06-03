@@ -5,6 +5,7 @@ import { config } from "dotenv";
 import { Kysely, SqliteDialect } from "kysely";
 import Database from "better-sqlite3";
 import bodyParser from "body-parser";
+import fs from "fs/promises";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
@@ -17,11 +18,29 @@ async function main() {
   app.use(bodyParser.json());
   app.use(bodyParser.urlencoded({ extended: true }));
 
-  const rootDir = path.resolve(__dirname);
-  const dbFile = path.join(rootDir, "takimbox.db");
+  const dbFile = path.resolve(__dirname, "takimbox.db");
+  const dbDir = path.dirname(dbFile);
+
+  try {
+    await fs.mkdir(dbDir, { recursive: true });
+  } catch (err) {
+    if (err.code !== 'EEXIST') {
+      console.error("Error al crear el directorio de la base de datos:", err);
+      throw err;
+    }
+  }
+
+  try {
+    const handle = await fs.open(dbFile, 'a+');
+    await handle.close();
+  } catch (err) {
+    console.error("Error al crear/acceder a la base de datos:", err);
+    throw err;
+  }
+
   const db = new Kysely({
     dialect: new SqliteDialect({
-      database: new Database(dbFile),
+      database: new Database(dbFile, { verbose: console.log }),
     }),
   });
 
