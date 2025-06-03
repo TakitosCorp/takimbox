@@ -8,5 +8,7 @@ services:
     ports:
       - "3006:3000"
     volumes:
-      - ./takimbox.db:/app/takimbox.db
+      - type: bind
+        source: ./takimbox.db
+        target: /app/takimbox.db
       - ./.env:/app/.env

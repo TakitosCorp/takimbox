@@ -18,13 +18,14 @@ async function main() {
   app.use(bodyParser.json());
   app.use(bodyParser.urlencoded({ extended: true }));
 
-  const dbFile = "/app/takimbox.db";
+  const dbFile = path.join("/app", "takimbox.db");
 
   const db = new Kysely({
     dialect: new SqliteDialect({
       database: new Database(dbFile, { 
-        verbose: true,
-        fileMustExist: false 
+        verbose: console.log,
+        timeout: 5000,
+        fileMustExist: false
       }),
     }),
   });
