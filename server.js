@@ -18,29 +18,26 @@ async function main() {
   app.use(bodyParser.json());
   app.use(bodyParser.urlencoded({ extended: true }));
 
-  const dbFile = path.resolve(__dirname, "takimbox.db");
-  const dbDir = path.dirname(dbFile);
+  // Cambiar la ruta de la base de datos
+  const dbFile = "/app/takimbox.db";
 
+  // Asegurar que el archivo no existe como directorio
   try {
-    await fs.mkdir(dbDir, { recursive: true });
-  } catch (err) {
-    if (err.code !== 'EEXIST') {
-      console.error("Error al crear el directorio de la base de datos:", err);
-      throw err;
+    const stat = await fs.stat(dbFile).catch(() => null);
+    if (stat?.isDirectory()) {
+      await fs.rm(dbFile, { recursive: true, force: true });
     }
-  }
-
-  try {
-    const handle = await fs.open(dbFile, 'a+');
-    await handle.close();
   } catch (err) {
-    console.error("Error al crear/acceder a la base de datos:", err);
-    throw err;
+    console.log("El archivo de base de datos no existe, se creará uno nuevo");
   }
 
+  // Crear la conexión SQLite directamente
   const db = new Kysely({
     dialect: new SqliteDialect({
-      database: new Database(dbFile, { verbose: console.log }),
+      database: new Database(dbFile, { 
+        verbose: console.log,
+        fileMustExist: false
+      }),
     }),
   });
 
