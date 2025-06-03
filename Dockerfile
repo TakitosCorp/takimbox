@@ -18,15 +18,19 @@ WORKDIR /app
 # Copia los archivos necesarios para instalar dependencias
 COPY package*.json ./
 
-# Instala herramientas necesarias, dependencias, compila nativos y desinstala build tools en un solo layer
+# Instala herramientas necesarias y configura permisos
 RUN apk add --no-cache tzdata python3 make g++ && \
-  cp /usr/share/zoneinfo/Europe/Madrid /etc/localtime && \
-  echo "Europe/Madrid" > /etc/timezone && \
-  npm install --omit=dev && \
-  npm cache clean --force && \
-  npm rebuild --force && \
-  npm rebuild better-sqlite3 --build-from-source && \
-  apk del python3 make g++
+    cp /usr/share/zoneinfo/Europe/Madrid /etc/localtime && \
+    echo "Europe/Madrid" > /etc/timezone && \
+    npm install --omit=dev && \
+    npm cache clean --force && \
+    npm rebuild --force && \
+    npm rebuild better-sqlite3 --build-from-source && \
+    apk del python3 make g++ && \
+    rm -rf /app/takimbox.db && \
+    chown -R node:node /app
+
+USER node
 
 # Copia solo el código fuente y no node_modules
 COPY . .
