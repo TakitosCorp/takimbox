@@ -36,10 +36,16 @@
                     />
                   </div>
                   <div>
-                    <label class="block text-gray-700 text-sm font-medium mb-1">Autor</label>
+                    <label class="block text-gray-700 text-sm font-medium mb-1">
+                      <span>Autor</span>
+                      <span class="text-xs text-gray-400 ml-2"
+                        >{{ newMessage.author.length }}/26</span
+                      >
+                    </label>
                     <input
                       v-model="newMessage.author"
                       type="text"
+                      maxlength="26"
                       class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-300"
                       placeholder="Ej: Juan Pérez"
                     />
@@ -166,7 +172,6 @@
             </transition-group>
           </transition>
 
-          <!-- Botones de navegación -->
           <button
             v-if="hasPreviousPage"
             @click="previousPage"
@@ -183,7 +188,6 @@
           </button>
         </div>
 
-        <!-- Detalle del mensaje -->
         <div
           v-else
           key="detail"
@@ -227,7 +231,6 @@
       </transition>
     </div>
 
-    <!-- Footer -->
     <div
       class="h-12 sm:h-14 bg-gray-200 border-t border-gray-300 flex items-center justify-between px-4 sm:px-5 sticky bottom-0 z-20"
     >
@@ -561,7 +564,6 @@ let highlightTimeout = null
 const closeDetailOnOutsideClick = () => {
   if (selectedMessage.value && selectedMessage.value.id === tutorialMessageId) {
     messages.value = messages.value.filter((msg) => msg.id !== tutorialMessageId)
-    // Destaca el botón de redactar durante 3 segundos
     highlightCompose.value = true
     if (highlightTimeout) clearTimeout(highlightTimeout)
     highlightTimeout = setTimeout(() => {
