@@ -3,37 +3,90 @@
     <div class="flex-1 relative overflow-hidden">
       <transition name="fade" mode="out-in">
         <!-- Formulario de redactar mensaje -->
-        <div v-if="showComposeForm" key="compose" class="absolute inset-0 flex flex-col items-center justify-center sm:p-5 p-4 px-4 pt-4 pb-18">
-          <div class="w-full max-w-4xl bg-white rounded-xl shadow-lg overflow-hidden flex flex-col" style="min-height:0;">
-            <div class="bg-gray-400 text-white text-center py-3 sm:py-4 px-3 sm:px-5 text-lg sm:text-3xl font-light">
+        <div
+          v-if="showComposeForm"
+          key="compose"
+          class="absolute inset-0 flex flex-col items-center justify-center sm:p-5 p-4 px-4 pt-4 pb-18"
+        >
+          <div
+            class="w-full max-w-4xl bg-white rounded-xl shadow-lg overflow-hidden flex flex-col"
+            style="min-height: 0"
+          >
+            <div
+              class="bg-gray-400 text-white text-center py-3 sm:py-4 px-3 sm:px-5 text-lg sm:text-3xl font-light"
+            >
               Redactar mensaje
             </div>
             <div class="flex-1 bg-white flex flex-col overflow-hidden">
               <div class="flex-1 relative overflow-y-auto hide-scrollbar p-4 sm:p-7">
                 <div class="space-y-4">
                   <div>
-                    <label class="block text-gray-700 text-sm font-medium mb-1">Nombre del mensaje</label>
-                    <input v-model="newMessage.name" type="text" class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-300" placeholder="Ej: Recordatorio" />
+                    <label class="block text-gray-700 text-sm font-medium mb-1">
+                      <span>Nombre del mensaje</span>
+                      <span class="text-xs text-gray-400 ml-2"
+                        >{{ newMessage.name.length }}/26</span
+                      >
+                    </label>
+                    <input
+                      v-model="newMessage.name"
+                      type="text"
+                      maxlength="26"
+                      class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-300"
+                      placeholder="Ej: Recordatorio"
+                    />
                   </div>
                   <div>
                     <label class="block text-gray-700 text-sm font-medium mb-1">Autor</label>
-                    <input v-model="newMessage.author" type="text" class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-300" placeholder="Ej: Juan Pérez" />
+                    <input
+                      v-model="newMessage.author"
+                      type="text"
+                      class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-300"
+                      placeholder="Ej: Juan Pérez"
+                    />
                   </div>
                   <div>
-                    <label class="block text-gray-700 text-sm font-medium mb-1">Color de fondo</label>
+                    <label class="block text-gray-700 text-sm font-medium mb-1"
+                      >Color de fondo</label
+                    >
                     <div class="flex flex-wrap gap-2">
-                      <div v-for="color in availableColors" :key="color.value" @click="newMessage.color = color.value" class="w-8 h-8 rounded-full cursor-pointer border-2 transition-all" :class="newMessage.color === color.value ? 'border-blue-500 scale-110' : 'border-gray-300'" :style="{ backgroundColor: color.value }"></div>
+                      <div
+                        v-for="color in availableColors"
+                        :key="color.value"
+                        @click="newMessage.color = color.value"
+                        class="w-8 h-8 rounded-full cursor-pointer border-2 transition-all"
+                        :class="
+                          newMessage.color === color.value
+                            ? 'border-blue-500 scale-110'
+                            : 'border-gray-300'
+                        "
+                        :style="{ backgroundColor: color.value }"
+                      ></div>
                     </div>
                   </div>
                   <div>
-                    <label class="block text-gray-700 text-sm font-medium mb-1">Contenido del mensaje</label>
-                    <textarea v-model="newMessage.content" rows="4" class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-300" placeholder="Escribe tu mensaje aquí..."></textarea>
+                    <label class="block text-gray-700 text-sm font-medium mb-1"
+                      >Contenido del mensaje</label
+                    >
+                    <textarea
+                      v-model="newMessage.content"
+                      rows="4"
+                      class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-300"
+                      placeholder="Escribe tu mensaje aquí..."
+                    ></textarea>
                   </div>
                   <div class="flex justify-end space-x-3 pt-4">
-                    <button @click="cancelCompose" class="px-4 py-2 bg-gray-200 text-gray-700 rounded-md hover:bg-gray-300 transition-colors">
+                    <button
+                      @click="cancelCompose"
+                      class="px-4 py-2 bg-gray-200 text-gray-700 rounded-md hover:bg-gray-300 transition-colors"
+                    >
                       Cancelar
                     </button>
-                    <button @click="saveMessage" class="px-4 py-2 bg-blue-500 text-white rounded-md hover:bg-blue-600 transition-colors" :disabled="!isFormValid" :class="{ 'opacity-50 cursor-not-allowed': !isFormValid }">
+                    <button
+                      @click="saveMessage"
+                      class="px-4 py-2 bg-blue-500 text-white rounded-md hover:bg-blue-600 transition-colors"
+                      :disabled="!isFormValid"
+                      :class="{ 'opacity-50 cursor-not-allowed': !isFormValid }"
+                    >
                       Enviar
                     </button>
                   </div>
@@ -44,60 +97,114 @@
         </div>
 
         <!-- Mensajes -->
-        <div v-else-if="!selectedMessage" key="grid" class="absolute inset-0 flex flex-col items-center justify-center">
+        <div
+          v-else-if="!selectedMessage"
+          key="grid"
+          class="absolute inset-0 flex flex-col items-center justify-center"
+        >
           <transition :name="transitionName" mode="out-in">
-            <transition-group name="fade-new" tag="div" :key="currentPage" class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4 sm:gap-7 px-4 py-6 sm:p-10 w-full max-w-7xl mx-auto sm:px-24">
-              <div v-for="message in currentPageMessages" :key="message.id" class="relative cursor-pointer transform hover:scale-105 transition-transform shadow-xl hover:shadow-2xl" @click="openMessage(message)">
-                <div class="envelope w-full h-[72px] sm:h-36 rounded-xl flex items-center justify-center" :style="{ backgroundColor: message.color || '#FFFFC9' }">
+            <transition-group
+              name="fade-new"
+              tag="div"
+              :key="currentPage"
+              class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4 sm:gap-7 px-4 py-6 sm:p-10 w-full max-w-7xl mx-auto sm:px-24"
+            >
+              <div
+                v-for="message in currentPageMessages"
+                :key="message.id"
+                class="relative cursor-pointer transform hover:scale-105 transition-transform shadow-xl hover:shadow-2xl"
+                @click="openMessage(message)"
+              >
+                <div
+                  class="envelope w-full h-[72px] sm:h-36 rounded-xl flex items-center justify-center"
+                  :style="{ backgroundColor: message.color || '#FFFFC9' }"
+                >
                   <div class="envelope-inner w-full h-full relative">
                     <div class="absolute w-full h-full flex items-center justify-center opacity-20">
                       <div class="w-full h-1/2 border-b border-gray-500"></div>
                       <div class="absolute w-full h-full">
                         <div class="w-full h-1/2 overflow-hidden">
-                          <div class="w-full h-full border-b border-gray-500 transform origin-bottom-left rotate-45"></div>
+                          <div
+                            class="w-full h-full border-b border-gray-500 transform origin-bottom-left rotate-45"
+                          ></div>
                         </div>
                       </div>
                       <div class="absolute w-full h-full">
                         <div class="w-full h-1/2 overflow-hidden">
-                          <div class="w-full h-full border-b border-gray-500 transform origin-bottom-right -rotate-45"></div>
+                          <div
+                            class="w-full h-full border-b border-gray-500 transform origin-bottom-right -rotate-45"
+                          ></div>
                         </div>
                       </div>
                     </div>
                     <div class="absolute inset-0 flex items-center justify-center">
-                      <span class="text-gray-700 text-base sm:text-2xl font-light">{{ message.name }}</span>
+                      <span class="text-gray-700 text-base sm:text-2xl font-light">{{
+                        message.name
+                      }}</span>
                     </div>
-                    <div v-if="!message.read" class="absolute -top-2 left-1/2 transform -translate-x-1/2 z-10">
-                      <div class="w-5 h-5 sm:w-9 sm:h-9 rounded-full bg-gradient-to-br from-red-500 to-red-600 border-2 border-white shadow-md animate-pulse"></div>
+                    <div
+                      v-if="!message.read"
+                      class="absolute -top-2 left-1/2 transform -translate-x-1/2 z-10"
+                    >
+                      <div
+                        class="w-5 h-5 sm:w-9 sm:h-9 rounded-full bg-gradient-to-br from-red-500 to-red-600 border-2 border-white shadow-md animate-pulse"
+                      ></div>
                     </div>
                     <div v-else class="absolute -top-2 left-1/2 transform -translate-x-1/2 z-10">
-                      <div class="w-5 h-5 sm:w-9 sm:h-9 rounded-full bg-gradient-to-br from-gray-400 to-gray-500 border-2 border-white shadow-md"></div>
+                      <div
+                        class="w-5 h-5 sm:w-9 sm:h-9 rounded-full bg-gradient-to-br from-gray-400 to-gray-500 border-2 border-white shadow-md"
+                      ></div>
                     </div>
                   </div>
                 </div>
               </div>
-              <div v-for="i in emptySlots" :key="`empty-${i}`" class="w-full h-[72px] sm:h-36"></div>
+              <div
+                v-for="i in emptySlots"
+                :key="`empty-${i}`"
+                class="w-full h-[72px] sm:h-36"
+              ></div>
             </transition-group>
           </transition>
 
           <!-- Botones de navegación -->
-          <button v-if="hasPreviousPage" @click="previousPage" class="absolute left-2 sm:left-10 top-1/2 transform hover:scale-105 transition-transform -translate-y-1/2 z-10 cursor-pointer">
+          <button
+            v-if="hasPreviousPage"
+            @click="previousPage"
+            class="absolute left-2 sm:left-10 top-1/2 transform hover:scale-105 transition-transform -translate-y-1/2 z-10 cursor-pointer"
+          >
             <img src="@/assets/left.png" alt="Anterior" class="h-10 w-10 sm:h-14 sm:w-14" />
           </button>
-          <button v-if="hasNextPage" @click="nextPage" class="absolute right-2 sm:right-10 top-1/2 transform hover:scale-105 transition-transform -translate-y-1/2 z-10 cursor-pointer">
+          <button
+            v-if="hasNextPage"
+            @click="nextPage"
+            class="absolute right-2 sm:right-10 top-1/2 transform hover:scale-105 transition-transform -translate-y-1/2 z-10 cursor-pointer"
+          >
             <img src="@/assets/right.png" alt="Siguiente" class="h-10 w-10 sm:h-14 sm:w-14" />
           </button>
         </div>
 
         <!-- Detalle del mensaje -->
-        <div v-else key="detail" class="absolute inset-0 flex flex-col items-center justify-center p-4 px-4 pt-4 pb-4" @mousedown.self="closeDetailOnOutsideClick">
-          <div class="w-full max-w-4xl bg-white rounded-xl shadow-lg overflow-hidden flex flex-col" style="min-height:0;">
-            <div class="bg-gray-400 text-white text-center py-3 sm:py-4 px-3 sm:px-5 text-lg sm:text-3xl font-light">
+        <div
+          v-else
+          key="detail"
+          class="absolute inset-0 flex flex-col items-center justify-center p-4 px-4 pt-4 pb-4"
+          @mousedown.self="closeDetailOnOutsideClick"
+        >
+          <div
+            class="w-full max-w-4xl bg-white rounded-xl shadow-lg overflow-hidden flex flex-col"
+            style="min-height: 0"
+          >
+            <div
+              class="bg-gray-400 text-white text-center py-3 sm:py-4 px-3 sm:px-5 text-lg sm:text-3xl font-light"
+            >
               {{ selectedMessage.name }}
             </div>
             <div class="flex-1 bg-white flex flex-col overflow-hidden">
               <div ref="contentContainer" class="flex-1 relative overflow-y-auto hide-scrollbar">
                 <div class="p-4 sm:p-7">
-                  <div class="pl-4 sm:pl-[38px] pr-4 text-gray-700 text-base sm:text-2xl font-light">
+                  <div
+                    class="pl-4 sm:pl-[38px] pr-4 text-gray-700 text-base sm:text-2xl font-light"
+                  >
                     <div class="wii-paper">
                       {{ selectedMessage.content }}
                     </div>
@@ -106,7 +213,9 @@
                     <div class="text-right text-gray-500 pr-3 sm:pr-5 pb-1 text-sm sm:text-lg">
                       {{ fechaEspanol }}
                     </div>
-                    <div class="text-right text-gray-400 pr-3 sm:pr-5 text-base sm:text-2xl font-light">
+                    <div
+                      class="text-right text-gray-400 pr-3 sm:pr-5 text-base sm:text-2xl font-light"
+                    >
                       {{ selectedMessage.author || 'Anónimo' }}
                     </div>
                   </div>
@@ -119,11 +228,24 @@
     </div>
 
     <!-- Footer -->
-    <div class="h-12 sm:h-14 bg-gray-200 border-t border-gray-300 flex items-center justify-between px-4 sm:px-5 sticky bottom-0 z-20">
+    <div
+      class="h-12 sm:h-14 bg-gray-200 border-t border-gray-300 flex items-center justify-between px-4 sm:px-5 sticky bottom-0 z-20"
+    >
       <div class="flex items-center">
-        <button @click="composeMessage" class="mobile-button w-8 h-8 sm:w-11 sm:h-11 bg-blue-100 rounded-full border-4 border-blue-300 flex items-center justify-center cursor-pointer hover:scale-105 transition-transform" :class="{ 'compose-highlight': highlightCompose }">
+        <button
+          @click="composeMessage"
+          class="mobile-button w-8 h-8 sm:w-11 sm:h-11 bg-blue-100 rounded-full border-4 border-blue-300 flex items-center justify-center cursor-pointer hover:scale-105 transition-transform"
+          :class="{ 'compose-highlight': highlightCompose }"
+        >
           <div class="w-4 h-4 sm:w-6 sm:h-6 bg-transparent flex items-center justify-center">
-            <svg xmlns="http://www.w3.org/2000/svg" class="h-3.5 w-3.5 sm:h-5 sm:w-5 text-gray-600" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              class="h-3.5 w-3.5 sm:h-5 sm:w-5 text-gray-600"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="2"
+            >
               <rect x="2" y="4" width="20" height="16" rx="2"></rect>
               <path d="M22 7l-10 5-10-5"></path>
             </svg>
@@ -134,9 +256,19 @@
         {{ fechaEspanol }}
       </div>
       <div class="flex items-center">
-        <button @click="goHome" class="mobile-button w-8 h-8 sm:w-11 sm:h-11 bg-blue-100 rounded-full border-4 border-blue-300 flex items-center justify-center cursor-pointer hover:scale-105 transition-transform">
+        <button
+          @click="goHome"
+          class="mobile-button w-8 h-8 sm:w-11 sm:h-11 bg-blue-100 rounded-full border-4 border-blue-300 flex items-center justify-center cursor-pointer hover:scale-105 transition-transform"
+        >
           <div class="w-4 h-4 sm:w-6 sm:h-6 bg-transparent flex items-center justify-center">
-            <svg xmlns="http://www.w3.org/2000/svg" class="h-3.5 w-3.5 sm:h-5 text-gray-600" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              class="h-3.5 w-3.5 sm:h-5 text-gray-600"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="2"
+            >
               <path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2V9z"></path>
               <polyline points="9 22 9 12 15 12 15 22"></polyline>
             </svg>
@@ -148,26 +280,26 @@
 </template>
 
 <script setup>
-import { ref, computed, onMounted, onUnmounted } from 'vue';
+import { ref, computed, onMounted, onUnmounted } from 'vue'
 
-const READ_KEY = 'takimbox_read_messages';
-const TUTORIAL_KEY = 'takimbox_tutorial_seen';
+const READ_KEY = 'takimbox_read_messages'
+const TUTORIAL_KEY = 'takimbox_tutorial_seen'
 
-const tutorialMessageId = '__tutorial__';
-const tutorialAuthor = 'AlexDevUwU';
+const tutorialMessageId = '__tutorial__'
+const tutorialAuthor = 'AlexDevUwU'
 
 const tutorialMessage = computed(() => {
-  let revealDate = '';
+  let revealDate = ''
   if (revealTimestamp.value) {
-    const date = new Date(revealTimestamp.value);
-    const dia = date.getDate().toString().padStart(2, '0');
-    const mes = (date.getMonth() + 1).toString().padStart(2, '0');
-    const año = date.getFullYear();
-    const horas = date.getHours().toString().padStart(2, '0');
-    const minutos = date.getMinutes().toString().padStart(2, '0');
-    revealDate = `${dia}/${mes}/${año} ${horas}:${minutos}`;
+    const date = new Date(revealTimestamp.value)
+    const dia = date.getDate().toString().padStart(2, '0')
+    const mes = (date.getMonth() + 1).toString().padStart(2, '0')
+    const año = date.getFullYear()
+    const horas = date.getHours().toString().padStart(2, '0')
+    const minutos = date.getMinutes().toString().padStart(2, '0')
+    revealDate = `${dia}/${mes}/${año} ${horas}:${minutos}`
   } else {
-    revealDate = '[pronto]';
+    revealDate = '[pronto]'
   }
   return {
     id: tutorialMessageId,
@@ -192,95 +324,99 @@ Normas de sentido común:
 
 ⚠️ Si no sigues estas normas, tu mensaje será eliminado y no se mostrará en la página, además de que se podrán tomar acciones para moderar este comportamiento.
 
-¡Gracias por ser parte de esta sorpresa tan especial para Gala! ❤️`
-  };
-});
+¡Gracias por ser parte de esta sorpresa tan especial para Gala! ❤️`,
+  }
+})
 
-const tutorialSeen = ref(false);
+const tutorialSeen = ref(false)
 
 function checkTutorialSeen() {
   try {
-    tutorialSeen.value = !!localStorage.getItem(TUTORIAL_KEY);
+    tutorialSeen.value = !!localStorage.getItem(TUTORIAL_KEY)
   } catch {
-    tutorialSeen.value = false;
+    tutorialSeen.value = false
   }
 }
 
 function setTutorialSeen() {
   try {
-    localStorage.setItem(TUTORIAL_KEY, '1');
-    tutorialSeen.value = true;
-  } catch { }
+    localStorage.setItem(TUTORIAL_KEY, '1')
+    tutorialSeen.value = true
+  } catch {}
 }
 
 function getReadIds() {
   try {
-    return JSON.parse(localStorage.getItem(READ_KEY)) || [];
+    return JSON.parse(localStorage.getItem(READ_KEY)) || []
   } catch {
-    return [];
+    return []
   }
 }
 
 function setReadIds(ids) {
-  localStorage.setItem(READ_KEY, JSON.stringify(ids));
+  localStorage.setItem(READ_KEY, JSON.stringify(ids))
 }
 
 function markRead(id) {
-  const ids = getReadIds();
+  const ids = getReadIds()
   if (!ids.includes(id)) {
-    ids.push(id);
-    setReadIds(ids);
+    ids.push(id)
+    setReadIds(ids)
   }
 }
 
-const messages = ref([]);
+const messages = ref([])
 
 const fetchMessages = async () => {
   try {
-    const res = await fetch('/api/messages');
+    const res = await fetch('/api/messages')
     if (res.status === 403) {
-      messages.value = [];
-      return;
+      messages.value = []
+      return
     }
-    if (!res.ok) throw new Error('Error al obtener mensajes');
-    const data = await res.json();
-    const readIds = getReadIds();
-    let msgs = data.map(msg => ({
+    if (!res.ok) throw new Error('Error al obtener mensajes')
+    const data = await res.json()
+    const readIds = getReadIds()
+    let msgs = data.map((msg) => ({
       ...msg,
-      read: readIds.includes(msg.id)
-    }));
+      read: readIds.includes(msg.id),
+    }))
     if (!tutorialSeen.value) {
-      msgs = [tutorialMessage.value, ...msgs];
+      msgs = [tutorialMessage.value, ...msgs]
     }
-    messages.value = msgs;
+    messages.value = msgs
   } catch (e) {
-    messages.value = [];
+    messages.value = []
   }
-};
+}
 
 const fetchNewMessages = async () => {
   try {
-    const res = await fetch('/api/messages');
-    if (res.status === 403) return;
-    if (!res.ok) return;
-    const data = await res.json();
-    const readIds = getReadIds();
-    const existingIds = new Set(messages.value.map(m => m.id));
-    const nuevos = data.filter(msg => !existingIds.has(msg.id));
+    const res = await fetch('/api/messages')
+    if (res.status === 403) return
+    if (!res.ok) return
+    const data = await res.json()
+    const readIds = getReadIds()
+    const existingIds = new Set(messages.value.map((m) => m.id))
+    const nuevos = data.filter((msg) => !existingIds.has(msg.id))
     if (nuevos.length > 0) {
-      nuevos.forEach(msg => {
-        msg.read = readIds.includes(msg.id);
-      });
-      if (!tutorialSeen.value && messages.value.length && messages.value[0].id === tutorialMessageId) {
-        messages.value = [tutorialMessage.value, ...nuevos, ...messages.value.slice(1)];
+      nuevos.forEach((msg) => {
+        msg.read = readIds.includes(msg.id)
+      })
+      if (
+        !tutorialSeen.value &&
+        messages.value.length &&
+        messages.value[0].id === tutorialMessageId
+      ) {
+        messages.value = [tutorialMessage.value, ...nuevos, ...messages.value.slice(1)]
       } else {
-        messages.value = [...nuevos, ...messages.value];
+        messages.value = [...nuevos, ...messages.value]
       }
     }
   } catch (e) {
-    console.error('Error al obtener nuevos mensajes', e);
+    console.error('Error al obtener nuevos mensajes', e)
   }
-};
+}
 
 const availableColors = [
   { name: 'Morado pastel', value: '#E1D7F6' },
@@ -294,35 +430,34 @@ const availableColors = [
   { name: 'Amarillo', value: '#FFFFC9' },
   { name: 'Naranja pastel', value: '#FFE5B4' },
   { name: 'Naranja claro', value: '#FFECB3' },
-  { name: 'Blanco', value: '#FFFFFF' }
-];
+  { name: 'Blanco', value: '#FFFFFF' },
+]
 
-const showComposeForm = ref(false);
+const showComposeForm = ref(false)
 const newMessage = ref({
   name: '',
   content: '',
   color: '#E1D7F6',
   author: '',
-  read: false
-});
+  read: false,
+})
 
 const isFormValid = computed(() => {
-  return newMessage.value.name.trim() !== '' &&
-    newMessage.value.content.trim() !== '';
-});
+  return newMessage.value.name.trim() !== '' && newMessage.value.content.trim() !== ''
+})
 
 const composeMessage = () => {
-  showComposeForm.value = true;
-  selectedMessage.value = null;
-};
+  showComposeForm.value = true
+  selectedMessage.value = null
+}
 
 const cancelCompose = () => {
-  showComposeForm.value = false;
-  resetNewMessage();
-};
+  showComposeForm.value = false
+  resetNewMessage()
+}
 
 const saveMessage = async () => {
-  if (!isFormValid.value) return;
+  if (!isFormValid.value) return
   try {
     const res = await fetch('/api/messages', {
       method: 'POST',
@@ -331,18 +466,18 @@ const saveMessage = async () => {
         name: newMessage.value.name,
         content: newMessage.value.content,
         color: newMessage.value.color,
-        author: newMessage.value.author || 'Anónimo'
-      })
-    });
-    if (!res.ok) throw new Error('Error al enviar mensaje');
-    await fetchMessages();
-    showComposeForm.value = false;
-    resetNewMessage();
-    currentPage.value = 0;
+        author: newMessage.value.author || 'Anónimo',
+      }),
+    })
+    if (!res.ok) throw new Error('Error al enviar mensaje')
+    await fetchMessages()
+    showComposeForm.value = false
+    resetNewMessage()
+    currentPage.value = 0
   } catch (e) {
-    alert('No se pudo enviar el mensaje');
+    alert('No se pudo enviar el mensaje')
   }
-};
+}
 
 const resetNewMessage = () => {
   newMessage.value = {
@@ -350,183 +485,183 @@ const resetNewMessage = () => {
     content: '',
     color: '#FFFFC9',
     author: '',
-    read: false
-  };
-};
+    read: false,
+  }
+}
 
-const selectedMessage = ref(null);
-const lastPage = ref(0);
+const selectedMessage = ref(null)
+const lastPage = ref(0)
 
-const currentPage = ref(0);
-const messagesPerPage = ref(9);
+const currentPage = ref(0)
+const messagesPerPage = ref(9)
 
 const updateMessagesPerPage = () => {
-  messagesPerPage.value = window.innerWidth < 640 ? 6 : 9;
-};
+  messagesPerPage.value = window.innerWidth < 640 ? 6 : 9
+}
 
-const revealTimestamp = ref(null);
-const revealLoaded = ref(false);
+const revealTimestamp = ref(null)
+const revealLoaded = ref(false)
 
 const fetchRevealTimestamp = async () => {
   try {
-    const res = await fetch('/api/config/revealTimestamp');
-    if (!res.ok) throw new Error();
-    const data = await res.json();
-    revealTimestamp.value = Number(data.value);
+    const res = await fetch('/api/config/revealTimestamp')
+    if (!res.ok) throw new Error()
+    const data = await res.json()
+    revealTimestamp.value = Number(data.value)
   } catch {
-    revealTimestamp.value = null;
+    revealTimestamp.value = null
   } finally {
-    revealLoaded.value = true;
+    revealLoaded.value = true
   }
-};
+}
 
 const canReveal = computed(() => {
-  if (!revealLoaded.value) return false;
-  if (!revealTimestamp.value) return true;
-  return Date.now() >= revealTimestamp.value;
-});
+  if (!revealLoaded.value) return false
+  if (!revealTimestamp.value) return true
+  return Date.now() >= revealTimestamp.value
+})
 
 function generateMatrixContent() {
-  return "Seguro que el contenido de este mensaje merece la pena :D";
+  return 'Seguro que el contenido de este mensaje merece la pena :D'
 }
 
 const genericMessage = computed(() => ({
-  name: "¡Vuelve más tarde!",
-  author: "TakitosCorp",
+  name: '¡Vuelve más tarde!',
+  author: 'TakitosCorp',
   content: generateMatrixContent(),
   timestamp: Date.now(),
-  color: "#E1D7F6"
-}));
+  color: '#E1D7F6',
+}))
 
 const openMessage = (message) => {
-  lastPage.value = currentPage.value;
+  lastPage.value = currentPage.value
   if (message.id === tutorialMessageId) {
-    setTutorialSeen();
-    selectedMessage.value = message;
-    showComposeForm.value = false;
-    return;
+    setTutorialSeen()
+    selectedMessage.value = message
+    showComposeForm.value = false
+    return
   }
   if (!canReveal.value) {
-    selectedMessage.value = genericMessage.value;
+    selectedMessage.value = genericMessage.value
   } else {
-    selectedMessage.value = message;
-    markRead(message.id);
-    message.read = true;
+    selectedMessage.value = message
+    markRead(message.id)
+    message.read = true
     if (matrixInterval) {
-      clearInterval(matrixInterval);
-      matrixInterval = null;
+      clearInterval(matrixInterval)
+      matrixInterval = null
     }
   }
-  showComposeForm.value = false;
-};
+  showComposeForm.value = false
+}
 
-const highlightCompose = ref(false);
-let highlightTimeout = null;
+const highlightCompose = ref(false)
+let highlightTimeout = null
 
 const closeDetailOnOutsideClick = () => {
   if (selectedMessage.value && selectedMessage.value.id === tutorialMessageId) {
-    messages.value = messages.value.filter(msg => msg.id !== tutorialMessageId);
+    messages.value = messages.value.filter((msg) => msg.id !== tutorialMessageId)
     // Destaca el botón de redactar durante 3 segundos
-    highlightCompose.value = true;
-    if (highlightTimeout) clearTimeout(highlightTimeout);
+    highlightCompose.value = true
+    if (highlightTimeout) clearTimeout(highlightTimeout)
     highlightTimeout = setTimeout(() => {
-      highlightCompose.value = false;
-    }, 3000);
+      highlightCompose.value = false
+    }, 3000)
   }
-  selectedMessage.value = null;
-};
+  selectedMessage.value = null
+}
 
 onMounted(() => {
-  checkTutorialSeen();
+  checkTutorialSeen()
   fetchRevealTimestamp().then(() => {
-    updateMessagesPerPage();
-    window.addEventListener('resize', updateMessagesPerPage);
-    fetchMessages();
+    updateMessagesPerPage()
+    window.addEventListener('resize', updateMessagesPerPage)
+    fetchMessages()
 
     intervalId = setInterval(() => {
-      now.value = Date.now();
-      fetchNewMessages();
-    }, 10000);
-  });
-  updateContainerWidth();
-  window.addEventListener('resize', updateContainerWidth);
+      now.value = Date.now()
+      fetchNewMessages()
+    }, 10000)
+  })
+  updateContainerWidth()
+  window.addEventListener('resize', updateContainerWidth)
   intervalId = setInterval(() => {
-    now.value = Date.now();
-  }, 1000);
+    now.value = Date.now()
+  }, 1000)
 
   const syncRead = () => {
-    const readIds = getReadIds();
-    messages.value.forEach(msg => {
-      msg.read = readIds.includes(msg.id);
-    });
-  };
-  window.addEventListener('storage', syncRead);
-});
+    const readIds = getReadIds()
+    messages.value.forEach((msg) => {
+      msg.read = readIds.includes(msg.id)
+    })
+  }
+  window.addEventListener('storage', syncRead)
+})
 
 onUnmounted(() => {
-  window.removeEventListener('resize', updateMessagesPerPage);
-  window.removeEventListener('resize', updateContainerWidth);
-  if (intervalId) clearInterval(intervalId);
-  window.removeEventListener('storage', syncRead);
-  if (matrixInterval) clearInterval(matrixInterval);
-  if (highlightTimeout) clearTimeout(highlightTimeout);
-});
+  window.removeEventListener('resize', updateMessagesPerPage)
+  window.removeEventListener('resize', updateContainerWidth)
+  if (intervalId) clearInterval(intervalId)
+  window.removeEventListener('storage', syncRead)
+  if (matrixInterval) clearInterval(matrixInterval)
+  if (highlightTimeout) clearTimeout(highlightTimeout)
+})
 
-const transitionName = ref('slide-left');
+const transitionName = ref('slide-left')
 
-const contentContainer = ref(null);
-const containerWidth = ref(0);
+const contentContainer = ref(null)
+const containerWidth = ref(0)
 
-const now = ref(Date.now());
-let intervalId = null;
+const now = ref(Date.now())
+let intervalId = null
 
 const fechaEspanol = computed(() => {
-  const date = new Date(now.value);
-  const diasSemana = ['Dom', 'Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb'];
-  const diaSemana = diasSemana[date.getDay()];
-  const dia = date.getDate().toString().padStart(2, '0');
-  const mes = (date.getMonth() + 1).toString().padStart(2, '0');
-  const horas = date.getHours().toString().padStart(2, '0');
-  const minutos = date.getMinutes().toString().padStart(2, '0');
-  return `${diaSemana} ${dia}/${mes} - ${horas}:${minutos}`;
-});
+  const date = new Date(now.value)
+  const diasSemana = ['Dom', 'Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb']
+  const diaSemana = diasSemana[date.getDay()]
+  const dia = date.getDate().toString().padStart(2, '0')
+  const mes = (date.getMonth() + 1).toString().padStart(2, '0')
+  const horas = date.getHours().toString().padStart(2, '0')
+  const minutos = date.getMinutes().toString().padStart(2, '0')
+  return `${diaSemana} ${dia}/${mes} - ${horas}:${minutos}`
+})
 
 const updateContainerWidth = () => {
   if (contentContainer.value) {
-    containerWidth.value = contentContainer.value.clientWidth;
+    containerWidth.value = contentContainer.value.clientWidth
   }
-};
+}
 
 const currentPageMessages = computed(() => {
-  const start = currentPage.value * messagesPerPage.value;
-  const end = start + messagesPerPage.value;
-  return messages.value.slice(start, end);
-});
+  const start = currentPage.value * messagesPerPage.value
+  const end = start + messagesPerPage.value
+  return messages.value.slice(start, end)
+})
 
 const emptySlots = computed(() => {
-  const count = currentPageMessages.value.length;
-  return count < messagesPerPage.value ? messagesPerPage.value - count : 0;
-});
+  const count = currentPageMessages.value.length
+  return count < messagesPerPage.value ? messagesPerPage.value - count : 0
+})
 
 const hasPreviousPage = computed(() => {
-  return currentPage.value > 0;
-});
+  return currentPage.value > 0
+})
 
 const hasNextPage = computed(() => {
-  return (currentPage.value + 1) * messagesPerPage.value < messages.value.length;
-});
+  return (currentPage.value + 1) * messagesPerPage.value < messages.value.length
+})
 
 const previousPage = () => {
   if (hasPreviousPage.value) {
-    transitionName.value = 'slide-right';
-    currentPage.value--;
+    transitionName.value = 'slide-right'
+    currentPage.value--
   }
-};
+}
 
 const nextPage = () => {
   if (hasNextPage.value) {
-    transitionName.value = 'slide-left';
-    currentPage.value++;
+    transitionName.value = 'slide-left'
+    currentPage.value++
   }
-};
+}
 </script>

@@ -5,7 +5,6 @@ import { config } from "dotenv";
 import { Kysely, SqliteDialect } from "kysely";
 import Database from "better-sqlite3";
 import bodyParser from "body-parser";
-import fs from "fs/promises";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
