@@ -8,8 +8,9 @@ services:
     ports:
       - "3006:3000"
     volumes:
-      - sqlite_data:/app
-      - ./.env:/app/.env
+      - ./data:/app/data
+      - ./.env:/app/.env:ro
+    restart: unless-stopped
 
 volumes:
   sqlite_data:
