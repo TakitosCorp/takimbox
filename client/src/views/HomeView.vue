@@ -199,9 +199,29 @@
             style="min-height: 0"
           >
             <div
-              class="bg-gray-400 text-white text-center py-3 sm:py-4 px-3 sm:px-5 text-lg sm:text-3xl font-light"
+              class="bg-gray-400 text-white text-center py-3 sm:py-4 px-3 sm:px-5 text-lg sm:text-3xl font-light flex justify-between items-center"
             >
-              {{ selectedMessage.name }}
+              <span>{{ selectedMessage.name }}</span>
+              <button
+                v-if="isAdmin && selectedMessage.id !== tutorialMessageId"
+                @click="deleteMessage(selectedMessage.id)"
+                class="text-red-500 hover:text-red-700 transition-colors"
+              >
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  class="h-6 w-6"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                  stroke="currentColor"
+                >
+                  <path
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                    stroke-width="2"
+                    d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"
+                  />
+                </svg>
+              </button>
             </div>
             <div class="flex-1 bg-white flex flex-col overflow-hidden">
               <div ref="contentContainer" class="flex-1 relative overflow-y-auto hide-scrollbar">
@@ -372,7 +392,12 @@ const messages = ref([])
 
 const fetchMessages = async () => {
   try {
-    const res = await fetch('/api/messages')
+    let url = '/api/messages'
+    const adminPassword = localStorage.getItem('unlock_admin')
+    if (adminPassword) {
+      url += `?adminUnlock=${encodeURIComponent(adminPassword)}`
+    }
+    const res = await fetch(url)
     if (res.status === 403) {
       messages.value = []
       return
@@ -395,7 +420,12 @@ const fetchMessages = async () => {
 
 const fetchNewMessages = async () => {
   try {
-    const res = await fetch('/api/messages')
+    let url = '/api/messages'
+    const adminPassword = localStorage.getItem('unlock_admin')
+    if (adminPassword) {
+      url += `?adminUnlock=${encodeURIComponent(adminPassword)}`
+    }
+    const res = await fetch(url)
     if (res.status === 403) return
     if (!res.ok) return
     const data = await res.json()
@@ -544,7 +574,7 @@ const openMessage = (message) => {
     showComposeForm.value = false
     return
   }
-  if (!canReveal.value) {
+  if (!canReveal.value && !isAdmin.value) {
     selectedMessage.value = genericMessage.value
   } else {
     selectedMessage.value = message
@@ -573,6 +603,43 @@ const closeDetailOnOutsideClick = () => {
   selectedMessage.value = null
 }
 
+const isAdmin = ref(false)
+
+const verifyAdmin = async () => {
+  const adminPassword = localStorage.getItem('unlock_admin')
+  if (adminPassword) {
+    try {
+      const res = await fetch(`/api/verify-admin?adminUnlock=${encodeURIComponent(adminPassword)}`)
+      const data = await res.json()
+      isAdmin.value = data.isAdmin
+    } catch {
+      isAdmin.value = false
+    }
+  }
+}
+
+const deleteMessage = async (id) => {
+  if (!isAdmin.value) return
+
+  const adminPassword = localStorage.getItem('unlock_admin')
+  if (!adminPassword) return
+
+  try {
+    const res = await fetch(
+      `/api/messages/${id}?adminUnlock=${encodeURIComponent(adminPassword)}`,
+      {
+        method: 'DELETE',
+      },
+    )
+    if (res.ok) {
+      messages.value = messages.value.filter((msg) => msg.id !== id)
+      selectedMessage.value = null
+    }
+  } catch (e) {
+    console.error('Error al borrar mensaje:', e)
+  }
+}
+
 onMounted(() => {
   checkTutorialSeen()
   fetchRevealTimestamp().then(() => {
@@ -598,6 +665,7 @@ onMounted(() => {
     })
   }
   window.addEventListener('storage', syncRead)
+  verifyAdmin()
 })
 
 onUnmounted(() => {
@@ -664,6 +732,17 @@ const nextPage = () => {
   if (hasNextPage.value) {
     transitionName.value = 'slide-left'
     currentPage.value++
+  }
+}
+
+// --- Solo el nombre de la key, no el valor secreto ---
+const ADMIN_KEY_NAME = 'unlock_admin' // debe coincidir con el .env del backend
+
+function getAdminUnlockValue() {
+  try {
+    return localStorage.getItem(ADMIN_KEY_NAME)
+  } catch {
+    return null
   }
 }
 </script>

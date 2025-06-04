@@ -10,6 +10,8 @@ const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
 config({ path: path.resolve(__dirname, ".env") });
 
+const ADMIN_PASSWORD = process.env.UNLOCK_ADMIN_PASSWORD;
+
 async function main() {
   const app = express();
   const port = process.env.PORT || 3000;
@@ -17,11 +19,24 @@ async function main() {
   app.use(bodyParser.json());
   app.use(bodyParser.urlencoded({ extended: true }));
 
+  const dbPath = process.env.NODE_ENV === "development" ? path.resolve(__dirname, "takimbox.db") : "/app/takimbox.db";
+
+  console.log("Usando base de datos en:", dbPath);
+
+  let database;
+  try {
+    database = new Database(dbPath, {
+      verbose: process.env.NODE_ENV === "development" ? console.log : undefined,
+    });
+    console.log("Conexión a la base de datos establecida");
+  } catch (err) {
+    console.error("Error al conectar con la base de datos:", err);
+    throw err;
+  }
+
   const db = new Kysely({
     dialect: new SqliteDialect({
-      database: new Database("/app/takimbox.db", { 
-        verbose: process.env.NODE_ENV === 'development' ? console.log : undefined
-      }),
+      database,
     }),
   });
 
@@ -43,7 +58,7 @@ async function main() {
         .addColumn("color", "varchar(20)", (col) => col.notNull())
         .addColumn("author", "varchar(100)", (col) => col.notNull())
         .addColumn("timestamp", "integer", (col) => col.notNull())
-        .addColumn("deleted", "boolean", (col) => col.defaultTo(false).notNull())
+        .addColumn("deleted", "integer", (col) => col.defaultTo(0).notNull()) 
         .execute();
 
       const reveal = await trx.selectFrom("config").select("id").where("id", "=", "revealTimestamp").executeTakeFirst();
@@ -62,12 +77,17 @@ async function main() {
   await initDb();
 
   async function getRevealTimestamp() {
-    const configItem = await db
-      .selectFrom("config")
-      .select("value")
-      .where("id", "=", "revealTimestamp")
-      .executeTakeFirst();
-    return configItem ? Number(configItem.value) : null;
+    try {
+      const configItem = await db
+        .selectFrom("config")
+        .select(["value"])
+        .where("id", "=", String("revealTimestamp"))
+        .executeTakeFirst();
+      return configItem ? Number(configItem.value) : null;
+    } catch (err) {
+      console.error("Error al obtener revealTimestamp:", err);
+      return null;
+    }
   }
 
   app.post("/api/messages", async (req, res) => {
@@ -75,11 +95,11 @@ async function main() {
     if (!name || !content || !color || !author) {
       return res.status(400).json({ error: "Faltan campos requeridos" });
     }
-    
+
     if (name.length > 26 || author.length > 26) {
       return res.status(400).json({ error: "Los campos name y author deben tener como máximo 26 caracteres" });
     }
-    
+
     if (!timestamp) {
       timestamp = Date.now();
     }
@@ -104,8 +124,15 @@ async function main() {
   app.get("/api/messages", async (req, res) => {
     try {
       const revealTimestamp = await getRevealTimestamp();
-      const messages = await db.selectFrom("messages").selectAll().execute();
-      if (revealTimestamp && Date.now() < revealTimestamp) {
+      const adminPassword = req.query.adminUnlock;
+      const isAdmin = adminPassword && adminPassword === ADMIN_PASSWORD;
+      const messages = await db
+        .selectFrom("messages")
+        .selectAll()
+        .where("deleted", "=", 0)
+        .execute();
+
+      if (revealTimestamp && Date.now() < revealTimestamp && !isAdmin) {
         const safeMessages = messages.map((msg) => ({
           ...msg,
           content: "",
@@ -149,6 +176,33 @@ async function main() {
       res.json(configItem);
     } catch (err) {
       res.status(500).json({ error: "Error al obtener la config" });
+    }
+  });
+
+  app.get("/api/verify-admin", async (req, res) => {
+    const adminPassword = req.query.adminUnlock;
+    const isAdmin = adminPassword && adminPassword === ADMIN_PASSWORD;
+    res.json({ isAdmin });
+  });
+
+  app.delete("/api/messages/:id", async (req, res) => {
+    const { id } = req.params;
+    const adminPassword = req.query.adminUnlock;
+
+    if (!adminPassword || adminPassword !== ADMIN_PASSWORD) {
+      return res.status(403).json({ error: "No autorizado" });
+    }
+
+    try {
+      await db.updateTable("messages")
+        .set({ deleted: 1 }) 
+        .where("id", "=", Number(id))
+        .execute();
+
+      res.json({ success: true });
+    } catch (err) {
+      console.error("Error al eliminar el mensaje:", err);
+      res.status(500).json({ error: "Error al eliminar el mensaje" });
     }
   });
 
