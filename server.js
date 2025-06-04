@@ -75,6 +75,11 @@ async function main() {
     if (!name || !content || !color || !author) {
       return res.status(400).json({ error: "Faltan campos requeridos" });
     }
+    
+    if (name.length > 26 || author.length > 26) {
+      return res.status(400).json({ error: "Los campos name y author deben tener como máximo 26 caracteres" });
+    }
+    
     if (!timestamp) {
       timestamp = Date.now();
     }
