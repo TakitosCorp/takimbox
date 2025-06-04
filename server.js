@@ -15,6 +15,7 @@ const ADMIN_PASSWORD = process.env.UNLOCK_ADMIN_PASSWORD;
 async function main() {
   const app = express();
   const port = process.env.PORT || 3000;
+  let server;
 
   app.use(bodyParser.json());
   app.use(bodyParser.urlencoded({ extended: true }));
@@ -33,6 +34,18 @@ async function main() {
     console.error("Error al conectar con la base de datos:", err);
     throw err;
   }
+
+  const cleanup = () => {
+    console.log("Cerrando servidor y base de datos...");
+    server.close(() => {
+      database.close();
+      console.log("Servidor y base de datos cerrados correctamente");
+      process.exit(0);
+    });
+  };
+
+  process.on("SIGTERM", cleanup);
+  process.on("SIGINT", cleanup);
 
   const db = new Kysely({
     dialect: new SqliteDialect({
@@ -58,7 +71,7 @@ async function main() {
         .addColumn("color", "varchar(20)", (col) => col.notNull())
         .addColumn("author", "varchar(100)", (col) => col.notNull())
         .addColumn("timestamp", "integer", (col) => col.notNull())
-        .addColumn("deleted", "integer", (col) => col.defaultTo(0).notNull()) 
+        .addColumn("deleted", "integer", (col) => col.defaultTo(0).notNull())
         .execute();
 
       const reveal = await trx.selectFrom("config").select("id").where("id", "=", "revealTimestamp").executeTakeFirst();
@@ -126,11 +139,7 @@ async function main() {
       const revealTimestamp = await getRevealTimestamp();
       const adminPassword = req.query.adminUnlock;
       const isAdmin = adminPassword && adminPassword === ADMIN_PASSWORD;
-      const messages = await db
-        .selectFrom("messages")
-        .selectAll()
-        .where("deleted", "=", 0)
-        .execute();
+      const messages = await db.selectFrom("messages").selectAll().where("deleted", "=", 0).execute();
 
       if (revealTimestamp && Date.now() < revealTimestamp && !isAdmin) {
         const safeMessages = messages.map((msg) => ({
@@ -194,10 +203,7 @@ async function main() {
     }
 
     try {
-      await db.updateTable("messages")
-        .set({ deleted: 1 }) 
-        .where("id", "=", Number(id))
-        .execute();
+      await db.updateTable("messages").set({ deleted: 1 }).where("id", "=", Number(id)).execute();
 
       res.json({ success: true });
     } catch (err) {
@@ -208,7 +214,7 @@ async function main() {
 
   app.use("/", express.static(path.join(__dirname, "views")));
 
-  app.listen(port, () => {
+  server = app.listen(port, () => {
     console.log(`Server is running at http://localhost:${port}`);
   });
 }
