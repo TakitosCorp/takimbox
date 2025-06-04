@@ -27,7 +27,7 @@ RUN apk add --no-cache tzdata python3 make g++ && \
     npm rebuild --force && \
     npm rebuild better-sqlite3 --build-from-source && \
     apk del python3 make g++ && \
-    rm -rf /app/takimbox.db && \
+    mkdir -p /app/data && \
     chown -R node:node /app
 
 USER node

@@ -20,7 +20,9 @@ async function main() {
   app.use(bodyParser.json());
   app.use(bodyParser.urlencoded({ extended: true }));
 
-  const dbPath = process.env.NODE_ENV === "development" ? path.resolve(__dirname, "takimbox.db") : "/app/takimbox.db";
+  const dbPath = process.env.NODE_ENV === "development" 
+    ? path.resolve(__dirname, "takimbox.db") 
+    : "/app/data/takimbox.db";
 
   console.log("Usando base de datos en:", dbPath);
 
