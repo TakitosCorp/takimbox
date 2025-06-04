@@ -580,10 +580,6 @@ const openMessage = (message) => {
     selectedMessage.value = message
     markRead(message.id)
     message.read = true
-    if (matrixInterval) {
-      clearInterval(matrixInterval)
-      matrixInterval = null
-    }
   }
   showComposeForm.value = false
 }
@@ -673,7 +669,6 @@ onUnmounted(() => {
   window.removeEventListener('resize', updateContainerWidth)
   if (intervalId) clearInterval(intervalId)
   window.removeEventListener('storage', syncRead)
-  if (matrixInterval) clearInterval(matrixInterval)
   if (highlightTimeout) clearTimeout(highlightTimeout)
 })
 
